@@ -80,10 +80,6 @@ def dft():
         # get the path to the next room
         path_to_next_room = path_to_next_unexplored_room(traversal_graph, traversal_graph[player.current_room.id], player.current_room)
         
-        # for testing
-        if len(path_to_next_room) == 0:
-            break
-        
         # follow the path to the room
         for direction in path_to_next_room:
             # get the current room so that its directions
