@@ -4,6 +4,7 @@ from world import World
 
 import random
 from ast import literal_eval
+from util import Queue 
 
 # Load world
 world = World()
@@ -11,10 +12,10 @@ world = World()
 
 # You may uncomment the smaller graphs for development and testing purposes.
 # map_file = "maps/test_line.txt"
-map_file = "maps/test_cross.txt"
+# map_file = "maps/test_cross.txt"
 # map_file = "maps/test_loop.txt"
 # map_file = "maps/test_loop_fork.txt"
-# map_file = "maps/main_maze.txt"
+map_file = "maps/main_maze.txt"
 
 # Loads the map into a dictionary
 room_graph=literal_eval(open(map_file, "r").read())
@@ -65,14 +66,17 @@ def dft():
             room_id_moved_from = player.current_room.id
             print("Travelled to room:")
             player.travel(direction, show_rooms=True)
+            # update the traversal path
+            traversal_path.append(direction)
             # if this room has not been added to the graph, add it
             if player.current_room.id not in traversal_graph:
                 traversal_graph[player.current_room.id] = build_graph_entry(player.current_room.id)
             # update the last room's direction in the graph with this room's id
             if traversal_graph[room_id_moved_from][direction] == '?':
                 update_room_exits_upon_move(direction, traversal_graph[room_id_moved_from], traversal_graph[player.current_room.id])
-            
-        print(traversal_graph)
+                
+    print(traversal_graph)
+    print(f'{len(traversal_graph)} rooms traversed!')
             
 def update_room_exits_upon_move(direction_moved, moved_from_room_entry, moved_to_room_entry):
     # get the opposite direction to update the room you went to
@@ -87,46 +91,82 @@ def path_to_next_unexplored_room(traversal_graph, room_entry, room):
     path_to_unexplored = []
     for key in room_entry:
         if room_entry[key] == '?':
-            if key in room.get_exits(): # ensure player can move to this room
+            if key in room.get_exits() and len(path_to_unexplored) == 0: # ensure player can move to this room
                 # the room that the player is in connects
                 # to an unexplored room, so there is no need
                 # to do bfs to find the next unexplored room
                 path_to_unexplored.append(key)
-                break
-            else:
+            elif key not in room.get_exits(): # optimizes the search so that the bfs doesn't find '?' on a exit that doesn't exist on a room that's already been visited
                 # this path does not exist--update graph with 'None' for this dir
                 # so a visit won't be attempted again
                 traversal_graph[room.id][key] = None             
     
-    #if len(path_to_unexplored) == 0:
-        # no unexplored rooms from this room--do BFS
-        #path_to_unexplored = bfs_to_unexplored(traversal_graph, room_entry)
+    
+    if len(path_to_unexplored) == 0:
+        print('stopped at room:')
+        print(room_entry)
+        # there are no unexplored rooms from this room--do BFS
+        path_to_unexplored = bfs_to_unexplored(traversal_graph, room_entry)
     
     return path_to_unexplored
     
 def bfs_to_unexplored(traversal_graph, room_entry):
+    
     if room_entry is None:
         room_entry = traversal_graph[0]
     
     # create a queue of rooms
-    paths = []
+    paths = Queue()
     visited = set()
     
-    paths.append([room_entry])
+    paths.enqueue([room_entry['room_id']])
     
-    while len(paths) > 0:
-        path = paths.pop(0)
+    # the path of rooms--this will be a list of room IDs to the next '?'
+    correct_path = None
+    while paths.size() > 0:
+        path = paths.dequeue()
         
-        current_room_entry = path[-1]
+        current_room_entry_id = path[-1]
         
-        if current_room_entry.room_id not in visited:
-            visited.add(current_room_entry.room_id)
+        if current_room_entry_id not in visited:
+            visited.add(current_room_entry_id)
             
+            current_room_entry = traversal_graph[current_room_entry_id]
             # look for unexplored room:
             for key in current_room_entry:
                 if current_room_entry[key] == '?':
-                    return path_to_unexplored
-
+                    correct_path = path
+                    break
+                
+            if correct_path is not None:
+                break
+            
+            for d in ['n', 's', 'w', 'e']:
+                if current_room_entry[d] != None and current_room_entry[d] != '?':
+                    copied_path = list(path)
+                    copied_path.append(traversal_graph[current_room_entry[d]]['room_id'])
+                    paths.enqueue(copied_path)
+        
+    # now, we need to take the correct path and convert
+    # it into n,s,w,e directions
+    directions = []
+    for i in range(len(correct_path)):
+        if i+1 < len(correct_path):
+            room_id = correct_path[i]
+            next_room_id = correct_path[i+1]
+            room = traversal_graph[room_id]
+            
+            
+            if room['n'] == next_room_id:
+                directions.append('n')
+            elif room['s'] == next_room_id:
+                directions.append('s')
+            elif room['w'] == next_room_id:
+                directions.append('w')
+            elif room['e'] == next_room_id:
+                directions.append('e')
+        
+    return directions
 
 dft()
 
