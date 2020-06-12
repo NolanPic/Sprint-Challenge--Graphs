@@ -96,6 +96,15 @@ def dft():
             # if this room has not been added to the graph, add it
             if player.current_room.id not in traversal_graph:
                 traversal_graph[player.current_room.id] = build_graph_entry(player.current_room.id)
+                
+                # look around the room and see if there are any directions
+                # that don't go anywhere. If so, mark them as None
+                current_room_entry = traversal_graph[player.current_room.id]
+                for key in current_room_entry:
+                    if current_room_entry[key] == '?':
+                        if key not in player.current_room.get_exits():
+                            current_room_entry[key] = None
+                            
             # update the last room's direction in the graph with this room's id
             if traversal_graph[room_id_moved_from][direction] == '?':
                 update_room_exits_upon_move(direction, traversal_graph[room_id_moved_from], traversal_graph[player.current_room.id])
@@ -116,29 +125,20 @@ def path_to_next_unexplored_room(traversal_graph, room_entry, room):
     path_to_unexplored = []
     for key in room_entry:
         if room_entry[key] == '?':
-            if key in room.get_exits() and len(path_to_unexplored) == 0: # ensure player can move to this room
-                # the room that the player is in connects
+            if key in room.get_exits(): # ensure player can move to this room
+                # The room that the player is in connects
                 # to an unexplored room, so there is no need
                 # to do bfs to find the next unexplored room
                 path_to_unexplored.append(key)
-            elif key not in room.get_exits(): # optimizes the search so that the bfs doesn't find '?' on a exit that doesn't exist on a room that's already been visited
-                # this path does not exist--update graph with 'None' for this dir
-                # so a visit won't be attempted again
-                traversal_graph[room.id][key] = None             
-    
+                break            
     
     if len(path_to_unexplored) == 0:
-        print('stopped at room:')
-        print(room_entry)
-        # there are no unexplored rooms from this room--do BFS
+        # There are no unexplored rooms from this room--do BFS
         path_to_unexplored = bfs_to_unexplored(traversal_graph, room_entry)
     
     return path_to_unexplored
     
 def bfs_to_unexplored(traversal_graph, room_entry):
-    
-    if room_entry is None:
-        room_entry = traversal_graph[0]
     
     # create a queue of rooms
     paths = Queue()
