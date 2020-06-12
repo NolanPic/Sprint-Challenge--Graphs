@@ -31,7 +31,32 @@ player = Player(world.starting_room)
 traversal_path = []
 
 def build_graph_entry(room_id):
-    return { 'room_id': room_id, 'n': '?', 's': '?', 'w': '?', 'e': '?' }
+    # WESN -> 987 moves
+    # EWSN -> 997 moves
+    # SWNE -> 977 moves
+    # SENW -> 996 moves
+    # NSEW -> 1007 moves
+    # SNEW -> 1011 moves
+    # ENSW -> 1000 moves
+    # NESW -> 985 moves
+    # ESNW -> 996 moves
+    # WSNE -> 977 moves
+    # NWSE -> 1010 moves
+    # WNSE -> 996 moves
+    # SNWE -> 1007 moves
+    # NSWE -> 1007 moves
+    # NEWS -> 991 moves
+    # ENWS -> 998 moves
+    # WNES -> 991 moves
+    # NWES -> 1001 moves
+    # EWNS -> 1001 moves
+    # WENS -> 996 moves
+    # SWEN -> 979 moves
+    # WSEN -> 987 moves
+    # ESWN -> 987 moves
+    # SEWN -> 981 moves
+    
+    return { 'room_id': room_id, 'w': '?', 's': '?', 'n': '?', 'e': '?' }
 
 def dft():
     rooms_count = len(room_graph) # count up to this when building our traversal graph
