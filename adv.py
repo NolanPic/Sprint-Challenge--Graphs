@@ -89,8 +89,7 @@ def dft():
             # get the current room so that its directions
             # can be updated after the player moves
             room_id_moved_from = player.current_room.id
-            print("Travelled to room:")
-            player.travel(direction, show_rooms=True)
+            player.travel(direction)
             # update the traversal path
             traversal_path.append(direction)
             # if this room has not been added to the graph, add it
@@ -163,33 +162,36 @@ def bfs_to_unexplored(traversal_graph, room_entry):
                     correct_path = path
                     break
                 
-            if correct_path is not None:
+            if correct_path is not None: # we have found our path, break out of BFS
                 break
             
+            # this is equivalent to looping through a node's neighbors
+            # and adding them to the queue,
             for d in ['n', 's', 'w', 'e']:
                 if current_room_entry[d] != None and current_room_entry[d] != '?':
                     copied_path = list(path)
                     copied_path.append(traversal_graph[current_room_entry[d]]['room_id'])
                     paths.enqueue(copied_path)
         
-    # now, we need to take the correct path and convert
+        
+    # We now have the path of room IDs.
+    # We need to take the path and convert
     # it into n,s,w,e directions
     directions = []
+    # loop thru the correct path of room IDs
     for i in range(len(correct_path)):
         if i+1 < len(correct_path):
+            # get the room and the next room
             room_id = correct_path[i]
             next_room_id = correct_path[i+1]
             room = traversal_graph[room_id]
             
-            
-            if room['n'] == next_room_id:
-                directions.append('n')
-            elif room['s'] == next_room_id:
-                directions.append('s')
-            elif room['w'] == next_room_id:
-                directions.append('w')
-            elif room['e'] == next_room_id:
-                directions.append('e')
+            # loop thru the room and see if any
+            # of its directions go to the next room.
+            # If so, append that to the directions
+            for d in ['n', 's', 'w', 'e']:
+                if room[d] == next_room_id:
+                    directions.append(d)
         
     return directions
 
